@@ -10,7 +10,7 @@
 | M2 权益规则 | 执行并复核权益规则 | `POST /api/policy` | `app/modules/policy/rules.py` | `tests/test_policy.py` |
 | M3 积分归批 | 执行并复核积分归批 | `POST /api/lots` | `app/modules/lots/rules.py` | `tests/test_lots.py` |
 | M4 消费到期 | 执行并复核消费到期 | `POST /api/consumption` | `app/modules/consumption/rules.py` | `tests/test_consumption.py` |
-| M5 退货回拨 | 执行并复核退货回拨 | `POST /api/refund` | `app/modules/refund/rules.py` | `tests/test_refund.py` |
+| M5 退货回拨 | 执行并复核退货回拨与补偿批次 | `POST /api/refund`、`POST /api/runs/{run_id}/compensations/publish` | `app/modules/refund/rules.py`、`app/store.py` | `tests/test_refund.py`、`tests/test_compensation.py`、`tests/test_compensation_api.py` |
 | M6 余额对账 | 执行并复核余额对账 | `POST /api/reconcile` | `app/modules/reconcile/rules.py` | `tests/test_reconcile.py` |
 | M7 期末归档 | 执行并复核期末归档 | `POST /api/archive` | `app/modules/archive/rules.py` | `tests/test_archive.py` |
 
@@ -33,6 +33,15 @@
 ## 对账规则
 
 原始逻辑输入=采纳行+隔离行+空行+重复表头+同值重复。业务计算按 DATA-DICTIONARY.md 分别核验，不能把上级与下级重复加总。所有隔离保留编号、原值、原始行号和稳定原因码。
+
+## 退货补偿裁决
+
+| 陷阱 | 现象 | 本项目处理 | 处理位置 | 测试 |
+|---|---|---|---|---|
+| 到期批次复活 | 沿用模式给已到期积分重算可用期，凭空延长负债 | 双闸门任一不满足即沿用原到期，到期损失关闭批次，新增负债自检为零 | `app/modules/refund/rules.py` | `tests/test_compensation.py::test_default_inherit_expired_lot_closed`、`test_self_check_blocks_phantom_liability` |
+| 补偿超原消费 | 累计退款补偿越过原消费未退部分 | 按原消费额减累计已退钳制，记 COMPENSATION_CAP | `app/modules/refund/rules.py` | `tests/test_compensation.py::test_compensation_capped_by_unrefunded_spend` |
+| 重复发布新增负债 | 同一补偿批次被反复发布 | 批号主键去重，重复执行返回重复批号不新增、不改版本 | `app/store.py` | `tests/test_compensation_api.py::test_publish_flow_and_idempotent` |
+| 核对失败污染余额 | 守恒或补偿自检失败仍写库 | 单事务先核对后写入，失败整体回滚保留旧版余额，revision 乐观锁拦截陈旧提交 | `app/store.py` | `tests/test_compensation_api.py::test_check_failure_keeps_legacy_balance`、`test_stale_revision_rejected_and_old_balance_kept` |
 
 ## 已知不覆盖
 

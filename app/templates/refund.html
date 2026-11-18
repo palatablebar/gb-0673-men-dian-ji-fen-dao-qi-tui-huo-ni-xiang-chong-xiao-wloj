@@ -1,1 +1,19 @@
-{% extends 'base.html' %}{% block content %}<section class="panel primary-panel"><div class="panel__head"><h2>退货回拨</h2><span>{{ view.rows|length }} 行</span></div><div class="column-letters"><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span></div>{{ cells(view.rows) }}</section><div class="grid"><section class="panel"><div class="panel__head"><h2>会员余额</h2><span>{{ state.archive.members }} 户</span></div><div class="balance-grid">{% for row in state.archive.balances %}<div class="member-cell"><small>{{ row.member }}</small><b>{{ row.remaining }}</b></div>{% endfor %}</div></section><section class="panel"><div class="panel__head"><h2>失败事件</h2><span>{{ state.quarantine|length }} 行</span></div>{{ cells(state.quarantine) }}</section></div>{% endblock %}
+{% extends 'base.html' %}{% block content %}<section class="panel primary-panel"><div class="panel__head"><h2>退货回拨</h2><span>{{ view.rows|length }} 行</span></div><div class="column-letters"><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span></div>{{ cells(view.rows) }}</section>
+<section class="panel comp-panel"><div class="panel__head"><h2>退货补偿批次</h2><span class="gate-tag">{{ view.gate.expiry_policy }}</span></div>
+<div class="gate-bar">
+  <span class="gate {% if view.gate.same_day_consumption %}on{% else %}off{% endif %}">门店当天消费：{{ '是' if view.gate.same_day_consumption else '否' }}</span>
+  <span class="gate {% if view.gate.finance_liability_ack %}on{% else %}off{% endif %}">财务确认新增负债：{{ '是' if view.gate.finance_liability_ack else '否' }}</span>
+  <span class="gate">重算窗口：{{ view.gate.window_days }} 天</span>
+  <span class="rule-text">{% if view.gate.recompute %}双闸门成立，按退货时刻重算可用期，新增负债 {{ state.compensation.new_liability_total }} 分已由财务确认{% else %}闸门未齐，沿用原批次到期时刻，已到期批次永久关闭，不延长积分责任{% endif %}</span>
+</div>
+{% if view.checks %}<div class="check-alert">{% for c in view.checks %}<span>{{ c.code }}：{{ c.detail }}</span>{% endfor %}</div>{% endif %}
+<div class="kpi-strip">
+  <div class="kpi">原批次到期损失<strong>{{ state.compensation.expiry_loss_total }}</strong></div>
+  <div class="kpi">补偿可用额<strong>{{ state.compensation.available_total }}</strong></div>
+  <div class="kpi">新增负债<strong>{{ state.compensation.new_liability_total }}</strong></div>
+  <div class="kpi">补偿批次<strong>{{ view.compensation_rows|length }}</strong></div>
+</div>
+<div class="comp-actions"><button id="publish-comp" {% if not state.compensation.check_passed %}disabled title="核对未通过，保留旧版余额"{% endif %}>发布待发布批次</button><output id="publish-result" aria-live="polite"></output></div>
+{{ cells(view.compensation_rows) }}
+</section>
+<div class="grid"><section class="panel"><div class="panel__head"><h2>会员余额</h2><span>{{ state.archive.members }} 户</span></div><div class="balance-grid">{% for row in state.archive.balances %}<div class="member-cell"><small>{{ row.member }}</small><b>{{ row.remaining }}</b></div>{% endfor %}</div></section><section class="panel"><div class="panel__head"><h2>失败事件</h2><span>{{ state.quarantine|length }} 行</span></div>{{ cells(state.quarantine) }}</section></div>{% endblock %}

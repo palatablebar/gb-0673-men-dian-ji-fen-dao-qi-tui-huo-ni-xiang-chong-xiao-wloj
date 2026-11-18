@@ -44,6 +44,16 @@ def review(run_id:str,payload:dict=Body(...)):
     revision=payload.get('revision')
     if not isinstance(revision,int) or revision<1: raise BusinessError('BAD_REVISION','版本号须为正整数')
     return store.review(DB_PATH,run_id,revision)
+@app.post('/api/runs/{run_id}/compensations/publish')
+def publish_compensations(run_id:str,payload:dict=Body(...)):
+    revision=payload.get('revision')
+    if not isinstance(revision,int) or revision<1: raise BusinessError('BAD_REVISION','版本号须为正整数')
+    comp_ids=payload.get('comp_ids')
+    if comp_ids is not None and (not isinstance(comp_ids,list) or not all(isinstance(x,str) for x in comp_ids)):
+        raise BusinessError('BAD_COMP_IDS','补偿批号须为字符串数组')
+    state,duplicated,fresh=store.publish_compensations(DB_PATH,run_id,revision,comp_ids)
+    return {'revision':state['revision'],'published':fresh,'duplicated':duplicated,
+            'compensation_rows':state['compensation']['rows']}
 @app.get('/api/export/{run_id}')
 def export(run_id:str):
     result=store.get(DB_PATH,run_id)

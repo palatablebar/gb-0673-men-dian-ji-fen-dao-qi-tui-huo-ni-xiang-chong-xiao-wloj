@@ -58,6 +58,16 @@
     "refunded": "退款",
     "expired": "到期",
     "points_balanced": "积分守恒",
-    "allocations": "回拨批次"
+    "allocations": "回拨批次",
+    "comp_id": "补偿批号",
+    "refund_id": "退款事件",
+    "source_lot": "原批次",
+    "refund_points": "退款积分",
+    "expiry_loss": "原批次到期损失",
+    "comp_points": "补偿可用额",
+    "expiry_policy": "到期裁决",
+    "expires": "到期时刻 UTC",
+    "publish_status": "发布状态",
+    "new_liability": "新增负债"
   }
 }

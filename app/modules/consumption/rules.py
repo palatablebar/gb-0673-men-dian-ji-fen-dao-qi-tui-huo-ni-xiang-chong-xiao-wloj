@@ -39,7 +39,7 @@ def replay(rows,lots,as_of):
             allocations.append({'lot':lot['id'],'points':count,'expired':is_expired})
             if not rest:break
         original['refunded']+=amount
-        refunds.append({'id':row['id'],'member':member,'ref':row['ref'],'points':amount,'restored':restored,'expired_refund':expired_refund,'allocations':allocations,'line':row['_line']})
+        refunds.append({'id':row['id'],'member':member,'ref':row['ref'],'points':amount,'restored':restored,'expired_refund':expired_refund,'allocations':allocations,'at':row['at'],'line':row['_line']})
         ledger.append({'id':row['id'],'member':member,'action':'REFUND','points':restored,'at':row['at']})
     expire(instant(as_of))
     return {'lots':list(live.values()),'spends':list(spends.values()),'refunds':refunds,'ledger':ledger,'errors':errors,'expired':expired}

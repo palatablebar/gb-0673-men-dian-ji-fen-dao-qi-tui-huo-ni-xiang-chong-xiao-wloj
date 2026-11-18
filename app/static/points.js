@@ -1,4 +1,21 @@
 const sheet={busy:false};const output=document.querySelector('#result');document.querySelector('#calculate').addEventListener('click',async()=>{if(sheet.busy)return;sheet.busy=true;output.textContent='计算中…';try{const dataset=document.querySelector('#dataset').value;const response=await fetch(dataset===document.body.dataset.source?'/api/runs/'+document.body.dataset.runId+'/rerun':'/api/runs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dataset})});const data=await response.json();if(!response.ok)throw Error(data.detail);const url=new URL(location.href);url.searchParams.set('dataset',dataset);url.searchParams.set('run_id',data.manifest.run_id);location.href=url;}catch(e){output.textContent=e.message;}finally{sheet.busy=false;}});document.querySelector('#member-filter').addEventListener('input',e=>document.querySelectorAll('.primary-panel tbody tr').forEach(row=>row.hidden=!row.textContent.includes(e.target.value)));document.querySelectorAll('td[tabindex]').forEach(cell=>cell.addEventListener('focus',()=>document.querySelector('#selection').textContent=cell.textContent));document.querySelector('#dataset').value=new URL(location.href).searchParams.get('dataset')||document.querySelector('#dataset').value;
+const publishBtn=document.querySelector('#publish-comp');
+if(publishBtn){
+ const publishOut=document.querySelector('#publish-result');
+ publishBtn.addEventListener('click',async()=>{
+  if(publishBtn.disabled)return;
+  publishBtn.disabled=true;publishOut.textContent='发布中…';
+  try{
+   const revision=parseInt(document.querySelector('.statusbar [data-revision]')?.dataset.revision||'1',10)||1;
+   const runId=document.body.dataset.runId;
+   const resp=await fetch('/api/runs/'+runId+'/compensations/publish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({revision})});
+   const data=await resp.json();
+   if(!resp.ok)throw Error(data.detail||'发布失败');
+   publishOut.textContent='已发布 '+data.published.length+' 批，重复跳过 '+data.duplicated.length+' 批';
+   location.reload();
+  }catch(e){publishOut.textContent=e.message;publishBtn.disabled=false;}
+ });
+}
 const filePicker=document.querySelector('#csv-file');
 if(filePicker){
  const editor=document.querySelector('#csv-text');
